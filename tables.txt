@@ -1,0 +1,30 @@
+CREATE TABLE agenda
+(
+    id SERIAL PRIMARY KEY,
+    tanggal DATE NOT NULL,
+    waktu TIME NOT NULL,
+    tempat VARCHAR(50) NOT NULL,
+    nama_agenda VARCHAR(100) NOT NULL,
+    dasar_pembahasan VARCHAR(100),
+    notulen VARCHAR(30),
+    foto VARCHAR(100),
+    kode VARCHAR(20) NOT NULL
+)
+
+CREATE TABLE daftar_hadir
+(
+    id SERIAL PRIMARY KEY,
+    nama VARCHAR(30) NOT NULL,
+    nid VARCHAR(12),
+    instansi VARCHAR(35) NOT NULL,
+    unit VARCHAR(35),
+    jabatan VARCHAR(30),
+    kode VARCHAR(20) NOT NULL
+)
+
+CREATE TABLE pembangkit
+(
+    id SERIAL PRIMARY KEY,
+    unit VARCHAR(20),
+    
+)
