@@ -32,6 +32,27 @@ CREATE TABLE pembangkit
     dtp INT NOT NULL,
     dmn INT NOT NULL,
     status VARCHAR(50),
+    kode VARCHAR(20) NOT NULL   
+)
+
+CREATE TABLE bbm_tp
+(
+    id SERIAL PRIMARY KEY,
+    kode_tangki VARCHAR(5) NOT NULL,
+    pengukuran FLOAT,
     kode VARCHAR(20) NOT NULL
-    
+)
+
+CREATE TABLE bbm_th
+(
+    id SERIAL PRIMARY KEY,
+    kode_tangki VARCHAR(5) NOT NULL,
+    pengukuran FLOAT,
+    kode VARCHAR(20) NOT NULL
+)
+
+CREATE TABLE k3kl
+(
+    ID SERIAL PRIMARY KEY,
+    info VARCHAR
 )
