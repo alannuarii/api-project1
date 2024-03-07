@@ -25,6 +25,13 @@ CREATE TABLE daftar_hadir
 CREATE TABLE pembangkit
 (
     id SERIAL PRIMARY KEY,
-    unit VARCHAR(20),
+    unit VARCHAR(20) NOT NULL,
+    mesin VARCHAR(10) NOT NULL,
+    tipe VARCHAR(15) NOT NULL,
+    seri VARCHAR(10) NOT NULL,
+    dtp INT NOT NULL,
+    dmn INT NOT NULL,
+    status VARCHAR(50),
+    kode VARCHAR(20) NOT NULL
     
 )
