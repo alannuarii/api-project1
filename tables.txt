@@ -54,5 +54,22 @@ CREATE TABLE bbm_th
 CREATE TABLE k3kl
 (
     ID SERIAL PRIMARY KEY,
-    info VARCHAR
+    info VARCHAR,
+    kode VARCHAR(20) NOT NULL
+)
+
+CREATE TABLE adm
+(
+    ID SERIAL PRIMARY KEY,
+    info VARCHAR,
+    kode VARCHAR(20) NOT NULL
+)
+
+CREATE TABLE kegiatan
+(
+    ID SERIAL PRIMARY KEY,
+    nama_kegiatan VARCHAR(50) NOT NULL,
+    pic VARCHAR(20) NOT NULL,
+    target DATE,
+    kode VARCHAR(20) NOT NULL
 )
