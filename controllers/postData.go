@@ -15,28 +15,6 @@ import (
 func PostNotulen(c *gin.Context){
 
 	db := db.DB
-		// formData.append('kode', data.get('kode'))
-        // formData.append('tanggal', data.get('tanggal'))
-        // formData.append('tempat', data.get('tempat'))
-        // formData.append('waktu', data.get('waktu'))
-        // formData.append('agenda', data.get('agenda'))
-        // formData.append('dasar', data.get('dasar'))
-        // formData.append('notulis', data.get('notulis'))
-        // formData.append('foto', data.get('foto'))
-        // formData.append('namaPeg', data.get('namaPeg'))
-        // formData.append('namaOH', data.get('namaOH'))
-        // formData.append('namaCs', data.get('namaCs'))
-        // formData.append('namaSec', data.get('namaSec'))
-        // formData.append('status', data.get('status'))
-		// formData.append('dmn', arrDmn)
-        // formData.append('status', arrStatus)
-        // formData.append('tp', arrTp)
-        // formData.append('th', arrTh)
-        // formData.append('k3kl', arrK3kl)
-        // formData.append('adm', arrAdm)
-        // formData.append('kegiatan', arrKegiatan)
-        // formData.append('pic', arrPic)
-        // formData.append('target', arrTarget)
 
 	kode := c.Request.FormValue("kode")
 	tanggal := c.Request.FormValue("tanggal")
@@ -52,13 +30,13 @@ func PostNotulen(c *gin.Context){
 	namaSecurity := c.Request.FormValue("namaSec")
 	dmn := c.Request.FormValue("dmn")
 	status := c.Request.FormValue("status")
-	// tp := c.Request.FormValue("tp")
-	// th := c.Request.FormValue("th")
-	// k3kl := c.Request.FormValue("k3kl")
-	// adm := c.Request.FormValue("adm")
-	// kegiatan := c.Request.FormValue("kegiatan")
-	// pic := c.Request.FormValue("pic")
-	// target := c.Request.FormValue("target")
+	tp := c.Request.FormValue("tp")
+	th := c.Request.FormValue("th")
+	k3kl := c.Request.FormValue("k3kl")
+	adm := c.Request.FormValue("adm")
+	kegiatan := c.Request.FormValue("kegiatan")
+	pic := c.Request.FormValue("pic")
+	target := c.Request.FormValue("target")
 
 	rename := fmt.Sprintf("%s.png", kode)
 
@@ -134,6 +112,100 @@ func PostNotulen(c *gin.Context){
 		}
 	}
 
+	// BBM 
+	tpSlice := strings.Split(tp, ",")
+	thSlice := strings.Split(th, ",")
+
+	var tpFloatSlice []float32
+	var thFloatSlice []float32
+
+	for _, s := range tpSlice{
+		f32, _ := strconv.ParseFloat(s, 32)
+		tpFloatSlice = append(tpFloatSlice, float32(f32))
+	}
+
+	for _, s := range thSlice{
+		f32, _ := strconv.ParseFloat(s, 32)
+		thFloatSlice = append(thFloatSlice, float32(f32))
+	}
+
+	var dataPengukuranTP []data.Fuel
+	for i, p := range data.TP{
+		p.Pengukuran = tpFloatSlice[i]
+		dataPengukuranTP = append(dataPengukuranTP, p)
+	}
+
+	var dataPengukuranTH []data.Fuel
+	for i, p := range data.TH{
+		p.Pengukuran = thFloatSlice[i]
+		dataPengukuranTH = append(dataPengukuranTH, p)
+	}
+
+	queryTP := `INSERT INTO bbm_tp (kode_tangki, pengukuran, kode) VALUES ($1, $2, $3) RETURNING id`
+	queryTH := `INSERT INTO bbm_th (kode_tangki, pengukuran, kode) VALUES ($1, $2, $3) RETURNING id`
+
+	for _, p := range dataPengukuranTP{
+		var tpID int
+		err = db.QueryRow(queryTP, p.KodeTangki, p.Pengukuran, kode).Scan(&tpID)
+		if err != nil{
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	for _, p := range dataPengukuranTH{
+		var thID int
+		err = db.QueryRow(queryTH, p.KodeTangki, p.Pengukuran, kode).Scan(&thID)
+		if err != nil{
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	// K3Kl 
+	k3klSlice := strings.Split(k3kl, ",")
+
+	queryK3kl := `INSERT INTO k3kl (info, kode) VALUES ($1, $2) RETURNING id`
+
+	for i := range k3klSlice{
+		var k3klID int
+		err = db.QueryRow(queryK3kl, k3klSlice[i], kode).Scan(&k3klID)
+		if err != nil{
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	// Adm 
+	admSlice := strings.Split(adm, ",")
+
+	queryAdm := `INSERT INTO adm (info, kode) VALUES ($1, $2) RETURNING id`
+
+	for i := range admSlice{
+		var admID int
+		err = db.QueryRow(queryAdm, admSlice[i], kode).Scan(&admID)
+		if err != nil{
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	// Kegiatan 
+	kegiatanSlice := strings.Split(kegiatan, ",")
+	picSlice := strings.Split(pic, ",")
+	targetSlice := strings.Split(target, ",")
+
+	queryKegiatan := `INSERT INTO kegiatan (nama_kegiatan, pic, target, kode) VALUES ($1, $2, $3, $4) RETURNING id`
+
+	for i := range kegiatanSlice{
+		var kegiatanID int
+		err = db.QueryRow(queryKegiatan, kegiatanSlice[i], picSlice[i], targetSlice[i], kode).Scan(&kegiatanID)
+		if err != nil{
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
 	// Foto 
 	destination := "static/img"
 	outputPath := filepath.Join(destination,rename)
@@ -146,3 +218,5 @@ func PostNotulen(c *gin.Context){
 
 	c.JSON(200, gin.H{"message": "Data berhasil dikirim"})
 }
+
+
