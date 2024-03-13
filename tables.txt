@@ -6,7 +6,7 @@ CREATE TABLE agenda
     tempat VARCHAR(50) NOT NULL,
     nama_agenda VARCHAR(100) NOT NULL,
     dasar_pembahasan VARCHAR(100),
-    notulen VARCHAR(30),
+    notulis VARCHAR(30),
     foto VARCHAR(100),
     kode VARCHAR(20) NOT NULL
 )
