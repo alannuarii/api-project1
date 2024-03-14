@@ -15,7 +15,7 @@ func GetNotulen(c *gin.Context) {
     // Agenda 
     agenda := []models.Agenda{}
 
-    query := `SELECT * FROM agenda WHERE nama_agenda = $1 ORDER BY tanggal DESC LIMIT 1`
+    query := `SELECT * FROM agenda WHERE nama_agenda = $1 ORDER BY tanggal DESC, id DESC LIMIT 1`
 
     err := db.Select(&agenda, query, "Daily Meeting")
     if err != nil {
