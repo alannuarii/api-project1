@@ -220,3 +220,40 @@ func PostNotulen(c *gin.Context){
 }
 
 
+func PostFotoNotulen(c *gin.Context){
+	db := db.DB
+
+	err := c.Request.ParseMultipartForm(0)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		fmt.Println(err.Error())
+		return
+	}
+
+	kode := c.Request.FormValue("kode")
+	foto, _ := c.FormFile("foto")
+
+	rename := fmt.Sprintf("%s.png", kode)
+
+	query := `UPDATE agenda SET foto = $1 WHERE kode = $2`
+
+	_, err = db.Exec(query, rename, kode)
+	if err != nil{
+		c.JSON(500, gin.H{"error": err.Error()})
+		fmt.Println(err.Error())
+		return
+	}
+
+	destination := "static/img"
+	outputPath := filepath.Join(destination,rename)
+	err = c.SaveUploadedFile(foto, outputPath)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		fmt.Println(err.Error())
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Foto berhasil dikirim"})
+}
+
+

@@ -114,6 +114,24 @@ func GetNotulen(c *gin.Context) {
         "kegiatan": kegiatan,
     }
 
-    c.JSON(200, gin.H{"message": "Data berhasil dikirim", "data": data})
+    c.JSON(200, gin.H{"message": "Sukses", "data": data})
 
+}
+
+
+func GetAllNotulen(c *gin.Context){
+    
+    db := db.DB
+
+    agenda := []models.Agenda{}
+
+    query := `SELECT * FROM agenda ORDER BY tanggal ASC`
+
+    err := db.Select(&agenda, query)
+    if err != nil {
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(200, gin.H{"message": "Sukses", "data": agenda})
 }

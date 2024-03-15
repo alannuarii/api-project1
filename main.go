@@ -11,6 +11,9 @@ func main(){
 	r.POST("api/notulen", controllers.PostNotulen)
 
 	r.GET("api/notulen", controllers.GetNotulen)
+	r.GET("api/allnotulen", controllers.GetAllNotulen)
+
+	r.PUT("api/fotonotulen", controllers.PostFotoNotulen)
 
 	r.Run(":8888")
 }
