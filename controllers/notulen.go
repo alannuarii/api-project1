@@ -3,14 +3,158 @@ package controllers
 import (
 	"api-project1/data"
 	"api-project1/db"
+	"api-project1/models"
 	"api-project1/utils"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 )
+
+
+func GetNotulen(c *gin.Context) {
+    db := db.DB
+
+	kode := c.Param("kode")
+
+	agenda := []models.Agenda{}
+
+	if kode == ""{
+		// Agenda 
+		query := `SELECT * FROM agenda WHERE nama_agenda = $1 ORDER BY tanggal DESC, id DESC LIMIT 1`
+
+		err := db.Select(&agenda, query, "Daily Meeting")
+		if err != nil {
+			c.JSON(500, gin.H{"message": err.Error()})
+			return
+		}
+
+		if len(agenda) == 0 {
+			c.JSON(404, gin.H{"message": "Agenda tidak ditemukan"})
+			return
+		}
+
+		kode = agenda[0].Kode
+
+	} else{
+		query := `SELECT * FROM agenda WHERE kode = $1`
+
+		err := db.Select(&agenda, query, kode)
+		if err != nil {
+			c.JSON(500, gin.H{"message": err.Error()})
+			return
+		}
+	}
+
+    // Daftar Hadir 
+    daftarHadir := []models.DaftarHadir{}
+
+    query := `SELECT * FROM daftar_hadir WHERE kode = $1`
+
+    err := db.Select(&daftarHadir, query, kode)
+    if err != nil {
+        c.JSON(500, gin.H{"message": err.Error()})
+        return
+    }
+
+    // Pembangkit 
+    pembangkit := []models.Engine{}
+
+    query = `SELECT * FROM pembangkit WHERE kode = $1`
+
+    err = db.Select(&pembangkit, query, kode)
+    if err != nil {
+        c.JSON(500, gin.H{"message": err.Error()})
+        return
+    }
+
+    // BBM 
+    tp := []models.Fuel{}
+    th := []models.Fuel{}
+
+    query = `SELECT * FROM bbm_tp WHERE kode = $1`
+
+    err = db.Select(&tp, query, kode)
+    if err != nil {
+        c.JSON(500, gin.H{"message": err.Error()})
+        return
+    }
+
+    query = `SELECT * FROM bbm_th WHERE kode = $1`
+
+    err = db.Select(&th, query, kode)
+    if err != nil {
+        c.JSON(500, gin.H{"message": err.Error()})
+        return
+    }
+
+    // k3kl 
+    k3kl := []models.Info{}
+    adm := []models.Info{}
+
+    query = `SELECT * FROM k3kl WHERE kode = $1`
+
+    err = db.Select(&k3kl, query, kode)
+    if err != nil {
+        c.JSON(500, gin.H{"message": err.Error()})
+        return
+    }
+
+    query = `SELECT * FROM adm WHERE kode = $1`
+
+    err = db.Select(&adm, query, kode)
+    if err != nil {
+        c.JSON(500, gin.H{"message": err.Error()})
+        return
+    }
+
+    // Kegiatan 
+    kegiatan := []models.Kegiatan{}
+
+    query = `SELECT * FROM kegiatan WHERE kode = $1`
+
+    err = db.Select(&kegiatan, query, kode)
+    if err != nil {
+        c.JSON(500, gin.H{"message": err.Error()})
+        return
+    }
+
+    data := map[string]interface{}{
+        "agenda": agenda,
+        "daftar_hadir": daftarHadir,
+        "pembangkit": pembangkit,
+        "tp": tp,
+        "th": th,
+        "k3kl": k3kl,
+        "adm": adm,
+        "kegiatan": kegiatan,
+    }
+
+    c.JSON(200, gin.H{"message": "Sukses", "data": data})
+
+}
+
+
+func GetAllNotulen(c *gin.Context){
+    
+    db := db.DB
+
+    agenda := []models.Agenda{}
+
+    query := `SELECT * FROM agenda ORDER BY tanggal ASC`
+
+    err := db.Select(&agenda, query)
+    if err != nil {
+        c.JSON(500, gin.H{"message": err.Error()})
+        return
+    }
+
+    c.JSON(200, gin.H{"message": "Sukses", "data": agenda})
+}
+
 
 func PostNotulen(c *gin.Context){
 
@@ -38,7 +182,19 @@ func PostNotulen(c *gin.Context){
 	pic := c.Request.FormValue("pic")
 	target := c.Request.FormValue("target")
 
-	rename := fmt.Sprintf("%s.png", kode)
+	rename := ""
+
+	// Foto 
+	if foto != "" {
+		rename = fmt.Sprintf("%s.png", kode)
+		destination := "static/img"
+		outputPath := filepath.Join(destination, rename)
+		err := utils.Base64topng(foto, outputPath)
+		if err != nil {
+			c.JSON(500, gin.H{"message": err.Error()})
+			return
+		} 
+	}
 
 	// Agenda 
 	queryAgenda := `INSERT INTO agenda (tanggal, waktu, tempat, nama_agenda, dasar_pembahasan, notulis, foto, kode) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
@@ -46,7 +202,7 @@ func PostNotulen(c *gin.Context){
 	var agendaID int
 	err := db.QueryRow(queryAgenda, tanggal, waktu, tempat, agenda, dasar, notulis, rename, kode).Scan(&agendaID)
 	if err != nil{
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.JSON(500, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -78,7 +234,7 @@ func PostNotulen(c *gin.Context){
 		var daftarHadirID int
 		err = db.QueryRow(queryDaftarHadir, p.Nama, p.NID, p.Instansi, p.Unit, p.Jabatan, kode).Scan(&daftarHadirID)
 		if err != nil{
-			c.JSON(500, gin.H{"error": err.Error()})
+			c.JSON(500, gin.H{"message": err.Error()})
 			return
 		}
 	}
@@ -107,7 +263,7 @@ func PostNotulen(c *gin.Context){
 		var pembangkitID int
 		err = db.QueryRow(queryPembangkit, p.Unit, p.Mesin, p.Tipe, p.Seri, p.DTP, p.DMN, p.Status, kode).Scan(&pembangkitID)
 		if err != nil{
-			c.JSON(500, gin.H{"error": err.Error()})
+			c.JSON(500, gin.H{"message": err.Error()})
 			return
 		}
 	}
@@ -148,7 +304,7 @@ func PostNotulen(c *gin.Context){
 		var tpID int
 		err = db.QueryRow(queryTP, p.KodeTangki, p.Pengukuran, kode).Scan(&tpID)
 		if err != nil{
-			c.JSON(500, gin.H{"error": err.Error()})
+			c.JSON(500, gin.H{"message": err.Error()})
 			return
 		}
 	}
@@ -157,7 +313,7 @@ func PostNotulen(c *gin.Context){
 		var thID int
 		err = db.QueryRow(queryTH, p.KodeTangki, p.Pengukuran, kode).Scan(&thID)
 		if err != nil{
-			c.JSON(500, gin.H{"error": err.Error()})
+			c.JSON(500, gin.H{"message": err.Error()})
 			return
 		}
 	}
@@ -171,7 +327,7 @@ func PostNotulen(c *gin.Context){
 		var k3klID int
 		err = db.QueryRow(queryK3kl, k3klSlice[i], kode).Scan(&k3klID)
 		if err != nil{
-			c.JSON(500, gin.H{"error": err.Error()})
+			c.JSON(500, gin.H{"message": err.Error()})
 			return
 		}
 	}
@@ -185,7 +341,7 @@ func PostNotulen(c *gin.Context){
 		var admID int
 		err = db.QueryRow(queryAdm, admSlice[i], kode).Scan(&admID)
 		if err != nil{
-			c.JSON(500, gin.H{"error": err.Error()})
+			c.JSON(500, gin.H{"message": err.Error()})
 			return
 		}
 	}
@@ -201,19 +357,9 @@ func PostNotulen(c *gin.Context){
 		var kegiatanID int
 		err = db.QueryRow(queryKegiatan, kegiatanSlice[i], picSlice[i], targetSlice[i], kode).Scan(&kegiatanID)
 		if err != nil{
-			c.JSON(500, gin.H{"error": err.Error()})
+			c.JSON(500, gin.H{"message": err.Error()})
 			return
 		}
-	}
-
-	// Foto 
-	destination := "static/img"
-	outputPath := filepath.Join(destination,rename)
-	err = utils.Base64topng(foto, outputPath)
-
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
 	}
 
 	c.JSON(200, gin.H{"message": "Data berhasil dikirim"})
@@ -225,7 +371,7 @@ func PostFotoNotulen(c *gin.Context){
 
 	err := c.Request.ParseMultipartForm(0)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.JSON(500, gin.H{"message": err.Error()})
 		fmt.Println(err.Error())
 		return
 	}
@@ -239,7 +385,7 @@ func PostFotoNotulen(c *gin.Context){
 
 	_, err = db.Exec(query, rename, kode)
 	if err != nil{
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.JSON(500, gin.H{"message": err.Error()})
 		fmt.Println(err.Error())
 		return
 	}
@@ -248,7 +394,7 @@ func PostFotoNotulen(c *gin.Context){
 	outputPath := filepath.Join(destination,rename)
 	err = c.SaveUploadedFile(foto, outputPath)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.JSON(500, gin.H{"message": err.Error()})
 		fmt.Println(err.Error())
 		return
 	}
@@ -257,3 +403,33 @@ func PostFotoNotulen(c *gin.Context){
 }
 
 
+func DeleteNotulen(c *gin.Context) {
+    db := db.DB
+
+    kode := c.Request.FormValue("kode")
+
+    imagePath := "./static/img/" + kode + ".png"
+
+    if _, err := os.Stat(imagePath); err == nil {
+        if err := os.Remove(imagePath); err != nil {
+            c.JSON(500, gin.H{"message": err.Error()})
+            return
+        }
+    } else if !os.IsNotExist(err) {
+        c.JSON(500, gin.H{"message": err.Error()})
+        return
+    }
+
+    tabels := []string{"agenda", "daftar_hadir", "pembangkit", "bbm_tp", "bbm_th", "k3kl", "adm", "kegiatan"}
+
+    for _, tabel := range tabels {
+        query := "DELETE FROM " + tabel + " WHERE kode = $1"
+        _, err := db.Exec(query, kode)
+        if err != nil {
+            c.JSON(500, gin.H{"message": err.Error()})
+            return
+        }
+    }
+
+    c.JSON(200, gin.H{"message": "Data berhasil dihapus"})
+}
