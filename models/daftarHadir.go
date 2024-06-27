@@ -9,3 +9,10 @@ type DaftarHadir struct {
     Jabatan  	string `db:"jabatan"`
 	Kode        string `db:"kode"`
 }
+
+type AgendaDaftarHadir struct {
+    Tanggal     		string `db:"tanggal"`
+    Tempat       		string `db:"tempat"`
+    NamaAgenda        	string `db:"nama_agenda"`
+    Kode                string `db:"kode"`
+}

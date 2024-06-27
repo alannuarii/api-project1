@@ -15,6 +15,8 @@ func main(){
 	r.GET("api/notulen", controllers.GetNotulen)
 	r.GET("api/notulen/:kode", controllers.GetNotulen)
 	r.GET("api/allnotulen", controllers.GetAllNotulen)
+	r.GET("api/alldaftarhadir", controllers.GetAllAbsensi)
+	r.GET("api/daftarhadir/:kode", controllers.GetAbsensi)
 
 	r.PUT("api/fotonotulen", controllers.PostFotoNotulen)
 
